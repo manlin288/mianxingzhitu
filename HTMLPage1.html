@@ -1,0 +1,1243 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>冕星之途</title>
+    <style>
+        :root {
+            --bg-deep: #0a0a12;
+            --bg-panel: #0d1b2a;
+            --text-main: #c8d6e5;
+            --text-gold: #f5cd79;
+            --text-dim: #778ca3;
+            --green-awaken: #78e08f;
+            --red-danger: #e77f67;
+            --blue-ice: #74b9ff;
+            --border-gold: #f5cd7944;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(ellipse at 50% 0%, #1a1a3e 0%, #0a0a12 70%);
+            color: var(--text-main);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star-particle {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) translateX(0) scale(1);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.8;
+            }
+
+            90% {
+                opacity: 0.3;
+            }
+
+            100% {
+                transform: translateY(-100vh) translateX(30px) scale(0.3);
+                opacity: 0;
+            }
+        }
+
+        #game {
+            position: relative;
+            z-index: 1;
+            max-width: 720px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 48px 40px;
+            background: rgba(13,27,42,0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-gold);
+            border-radius: 16px;
+            box-shadow: 0 0 60px rgba(245,205,121,0.06);
+            line-height: 2.1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            transition: border-color 0.8s ease, box-shadow 0.8s ease;
+        }
+
+        #title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-gold);
+            color: var(--text-dim);
+            font-size: 13px;
+            letter-spacing: 2px;
+        }
+
+        #game-title {
+            color: var(--text-gold);
+            font-size: 15px;
+            letter-spacing: 4px;
+            transition: color 0.8s ease, text-shadow 0.8s ease;
+        }
+
+        #lab-code {
+            font-family: "Courier New", monospace;
+            color: var(--text-dim);
+            transition: color 0.8s ease;
+        }
+
+            #lab-code.updated {
+                color: var(--text-gold);
+            }
+
+        #text-area {
+            flex: 1 0 auto;
+            min-height: 250px;
+            margin-bottom: 28px;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+
+            #text-area p {
+                margin-bottom: 12px;
+                animation: fadeIn 0.4s ease-out;
+            }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .system-text {
+            color: var(--text-dim);
+            font-size: 13px;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border-gold);
+        }
+
+        .awaken {
+            color: var(--green-awaken);
+            font-weight: bold;
+            animation: awakenGlow 1.2s ease-in-out infinite;
+        }
+
+        @keyframes awakenGlow {
+            0%,100% {
+                text-shadow: 0 0 4px #78e08f;
+            }
+
+            50% {
+                text-shadow: 0 0 24px #78e08f, 0 0 48px #38ada9;
+            }
+        }
+
+        .danger {
+            color: var(--red-danger);
+            font-weight: bold;
+        }
+
+        .golden {
+            color: var(--text-gold);
+            font-style: italic;
+        }
+
+        .typing-cursor::after {
+            content: '▎';
+            animation: blink 1s step-end infinite;
+            color: var(--text-gold);
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        #choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+            #choices button {
+                width: 100%;
+                text-align: left;
+                background: rgba(30,39,46,0.7);
+                color: var(--text-gold);
+                border: 1px solid var(--border-gold);
+                padding: 14px 20px;
+                font-size: 15px;
+                letter-spacing: 1px;
+                cursor: pointer;
+                border-radius: 8px;
+                transition: all 0.35s ease;
+                position: relative;
+                overflow: hidden;
+                font-family: inherit;
+            }
+
+                #choices button:hover {
+                    background: rgba(245,205,121,0.12);
+                    border-color: #f5cd79;
+                    box-shadow: 0 0 20px rgba(245,205,121,0.15);
+                    transform: translateX(4px);
+                }
+
+        #status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-gold);
+            color: var(--text-dim);
+            font-size: 12px;
+            letter-spacing: 1px;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+            #status-bar span {
+                white-space: nowrap;
+            }
+
+        #achievement-toast {
+            position: fixed;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(13,27,42,0.95);
+            border: 1px solid var(--text-gold);
+            color: var(--text-gold);
+            padding: 12px 28px;
+            border-radius: 30px;
+            font-size: 14px;
+            letter-spacing: 2px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+            text-align: center;
+        }
+
+            #achievement-toast.show {
+                opacity: 1;
+            }
+
+        /* 觉醒界面 */
+        #game.awakened-state {
+            border-color: rgba(120, 224, 143, 0.4);
+            box-shadow: 0 0 60px rgba(120, 224, 143, 0.10), 0 0 120px rgba(10, 10, 18, 0.8);
+        }
+
+            #game.awakened-state #game-title {
+                color: #78e08f;
+                text-shadow: 0 0 12px rgba(120, 224, 143, 0.3);
+            }
+
+            #game.awakened-state #lab-code {
+                color: #78e08f;
+            }
+
+        /* 路线主题 */
+        #game.route-base {
+            border-color: rgba(240, 160, 80, 0.5);
+            box-shadow: 0 0 60px rgba(240, 160, 80, 0.10), 0 0 120px rgba(10, 10, 18, 0.8);
+        }
+
+            #game.route-base #game-title {
+                color: #f0a050;
+                text-shadow: 0 0 8px rgba(240, 160, 80, 0.3);
+            }
+
+            #game.route-base #lab-code {
+                color: #f0a050;
+            }
+
+            #game.route-base button {
+                border-color: rgba(240, 160, 80, 0.6);
+                color: #f7c680;
+            }
+
+                #game.route-base button:hover {
+                    background: rgba(240, 160, 80, 0.15);
+                    border-color: #f0a050;
+                    box-shadow: 0 0 20px rgba(240, 160, 80, 0.15);
+                }
+
+        #game.route-planet {
+            border-color: rgba(120, 224, 143, 0.5);
+            box-shadow: 0 0 60px rgba(120, 224, 143, 0.10), 0 0 120px rgba(10, 10, 18, 0.8);
+        }
+
+            #game.route-planet #game-title {
+                color: #78e08f;
+                text-shadow: 0 0 8px rgba(120, 224, 143, 0.3);
+            }
+
+            #game.route-planet #lab-code {
+                color: #78e08f;
+            }
+
+            #game.route-planet button {
+                border-color: rgba(120, 224, 143, 0.6);
+                color: #a3e4bc;
+            }
+
+                #game.route-planet button:hover {
+                    background: rgba(120, 224, 143, 0.15);
+                    border-color: #78e08f;
+                    box-shadow: 0 0 20px rgba(120, 224, 143, 0.15);
+                }
+
+        #game.route-survival {
+            border-color: rgba(136, 153, 170, 0.5);
+            box-shadow: 0 0 60px rgba(136, 153, 170, 0.10), 0 0 120px rgba(10, 10, 18, 0.8);
+        }
+
+            #game.route-survival #game-title {
+                color: #8899aa;
+                text-shadow: 0 0 8px rgba(136, 153, 170, 0.3);
+            }
+
+            #game.route-survival #lab-code {
+                color: #8899aa;
+            }
+
+            #game.route-survival button {
+                border-color: rgba(136, 153, 170, 0.6);
+                color: #aabbcc;
+            }
+
+                #game.route-survival button:hover {
+                    background: rgba(136, 153, 170, 0.15);
+                    border-color: #8899aa;
+                    box-shadow: 0 0 20px rgba(136, 153, 170, 0.15);
+                }
+    </style>
+</head>
+<body>
+    <div id="starfield"></div>
+    <div id="achievement-toast"></div>
+    <div id="game">
+        <div id="title-bar">
+            <span id="game-title">冕 星 之 途</span>
+            <span id="lab-code">Eden-8</span>
+        </div>
+        <div id="text-area"></div>
+        <div id="choices"></div>
+        <div id="status-bar">
+            <span>人性 <span id="stat-human">0</span></span>
+            <span>理性 <span id="stat-logic">0</span></span>
+            <span>自然 <span id="stat-nature">0</span></span>
+            <span>神性 <span id="stat-divinity">0</span></span>
+            <span>污染 <span id="stat-corruption">0</span></span>
+            <span>感染 <span id="stat-infection" style="color:#e77f67;">0</span></span>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 游戏状态 ====================
+        let gameState = {
+            scene: "node_0_1",
+            baseCode: "Eden-8",
+            suffixes: [],
+            fullCode: "Eden-8",
+            human: 0, logic: 0, nature: 0, divinity: 0, corruption: 0,
+            infection: 0,
+            linHuaFavor: 0, planetFavor: 0,
+            awakened: false,
+            woodStreak: 0, fireStreak: 0,
+            totalInjections: 0, injectionThisWeek: 0, week: 1,
+            chosenExposure: null, escapeMethod: null,
+            location: null,
+            chapter: 0,
+            baseDailyCount: 0,
+            baseKillCount: 0,
+            respondedToPlanet: null,
+            hasRabbit: false, hasMulberry: false, hasBird: false,
+            rejectedRabbit: false, rejectedMulberry: false, rejectedBird: false,
+            hasMulberryGuardUsed: false,
+            planetQuestReceived: false,
+            finalChoice: null,
+            weekCount: 1,
+            isTyping: false,
+            _node01Result: '',
+            _awakenResult: '',
+            _node03Result: '',
+            planetDailyCount: 0,
+            survivalDailyCount: 0
+        };
+
+        const textArea = document.getElementById('text-area');
+        const choicesDiv = document.getElementById('choices');
+        const labCodeEl = document.getElementById('lab-code');
+        const achievementToast = document.getElementById('achievement-toast');
+        let typingTimer = null;
+
+        // 星光粒子
+        function createStarfield() {
+            const container = document.getElementById('starfield');
+            for (let i = 0; i < 60; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star-particle');
+                const size = Math.random() * 3 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDuration = (Math.random() * 12 + 8) + 's';
+                star.style.animationDelay = Math.random() * 8 + 's';
+                star.style.opacity = (Math.random() * 0.4 + 0.1);
+                container.appendChild(star);
+            }
+        }
+        createStarfield();
+
+        // 打字机
+        function typeWriter(text, target, speed = 55, callback = null) {
+            if (typingTimer) { clearInterval(typingTimer); typingTimer = null; }
+            gameState.isTyping = true;
+            target.innerHTML = '';
+            target.classList.add('typing-cursor');
+            let i = 0;
+            typingTimer = setInterval(() => {
+                if (i < text.length) {
+                    if (text.charAt(i) === '<') {
+                        const end = text.indexOf('>', i);
+                        if (end !== -1) { target.innerHTML += text.substring(i, end + 1); i = end + 1; return; }
+                    }
+                    target.innerHTML += text.charAt(i);
+                    i++;
+                    target.scrollTop = target.scrollHeight;
+                } else {
+                    clearInterval(typingTimer); typingTimer = null;
+                    target.classList.remove('typing-cursor');
+                    gameState.isTyping = false;
+                    if (callback) callback();
+                }
+            }, speed);
+        }
+        function skipTyping() {
+            if (typingTimer) { clearInterval(typingTimer); typingTimer = null; }
+            if (gameState.isTyping) { gameState.isTyping = false; renderScene(); }
+        }
+
+        // 编号系统
+        function addSuffix(name) {
+            if (!gameState.suffixes.includes(name)) {
+                gameState.suffixes.push(name);
+                updateFullCode();
+                const meanings = {
+                    'Sisyphus': '西西弗斯，希腊神话中被罚永恒推石上山的人物。你连续六次注射都未能觉醒——但你仍在坚持，正如推石者从未放手。',
+                    'Prometheus': '普罗米修斯，盗取火种赠予人类的泰坦。你选择暴露自己的异能，将植物的力量带到了这个末世的人间。',
+                    'Hestia': '赫斯提亚，炉灶与家庭的女神。你选择隐藏能力，让火焰在暗处静静燃烧——有些力量不必被所有人看见。',
+                    'Adam': '亚当，《圣经》中伊甸园里的第一人。你在恐惧中哭泣，选择了情感与脆弱——这是人类最原始也最勇敢的反应。',
+                    'Narcissus': '那喀索斯，希腊神话中因迷恋自己的倒影而化为水仙花的少年。你被丧尸头上的小花吸引，在危险面前选择了注视美。',
+                    'Pandora': '潘多拉，希腊神话中打开魔盒释放灾难的女子。你走向了那条最无助的路——但别忘了，匣底还留着希望。',
+                    'Gaia': '盖亚，希腊神话中的大地母神。你回应了星球的呼唤，从此不再是孤独的实验体，而是被大地认下的孩子。',
+                    'Cain': '该隐，《圣经》中因杀死兄弟而被放逐的流浪者。你拒绝了星球的呼唤，选择了独行的道路。',
+                    'Hermes': '赫尔墨斯，希腊神话中穿越边界的信使。空间系的变异试剂在你的血液中留下了穿越万界的印记。',
+                    'Oracle': '神谕，古希腊的预言者。精神系变异试剂让你的意识触及了常人不曾看见的真相。',
+                    'Chronos': '柯罗诺斯，希腊神话中时间的化身。时间系的变异试剂让你在一个呼吸间窥见了永恒。',
+                    'Tiamat': '提亚马特，美索不达米亚神话中的混沌母神。混沌系的试剂在你的血液中注入了创造与毁灭并存的原初之力。',
+                    'Artemis': '阿尔忒弥斯，希腊神话中的狩猎女神与动物守护者。你收养了那只灰色的野兔——从此狩猎女神与你同行。',
+                    'Yggdrasil': '世界树，北欧神话中连接九界的神树。你种下了一颗种子，而这颗种子将连接天与地。',
+                    'Phoenix': '菲尼克斯，神话中浴火重生的不死鸟。你救助了一只暗红羽毛的幼鸟——它的余生将在火焰中轮回。',
+                    'Cybele': '西布莉，弗里吉亚神话中的万兽之母。你收养了全部三只动物，大地上的生命都围绕在你的身边。',
+                    'Eve': '夏娃，《圣经》中伊甸园里的第一位女性。一颗糖的甜味让你第一次体验到人类之间最朴素的善意。',
+                    'Noah': '诺亚，《圣经》中建造方舟、在洪水中保存生命的人。你被带入人类最后的堡垒——方舟启航了。',
+                    'Achilles': '阿喀琉斯，希腊英雄，全身刀枪不入唯有脚踵是弱点。你的感染度已经超过了警戒线——英雄也会受伤。',
+                    'Houyi': '后羿，中国神话中射落九日的英雄。你累计击杀了十只以上的丧尸，用你的双手射落了末世的灾厄。',
+                    'Odysseus': '奥德修斯，希腊神话中漂泊十年才返回故乡的英雄。你独自在荒野中求存，用智慧与坚韧开辟了归途。',
+                    'Nüwa': '女娲，中国神话中炼石补天的创世女神。你选择献祭自己，用自己的身体填补了这个破碎世界的裂缝。',
+                    'Pangu': '盘古，中国神话中开天辟地的创世神。你选择远走星际，一斧劈开混沌，前往新的天地。',
+                    "Chang'e": '嫦娥，中国神话中服下不死药飞升月宫的仙女。你的神性超越了界限，飞向了比月亮更远的星辰。',
+                    'Lilith': '莉莉丝，犹太神话中拒绝顺从亚当的第一位女性。你拒绝了所有宠物，也拒绝了这个世界的安排。',
+                    'Morpheus': '摩耳甫斯，希腊神话中的梦神。你识破了这场模拟——梦境在你面前碎裂。',
+                    'Janus': '雅努斯，罗马神话中同时拥有两副面孔的门神。你开始了新的周目，过去的记忆与未来的未知同时存在。',
+                    'Athena': '雅典娜，希腊神话中的智慧女神。你的理性值已经达到了足以被称为智者的高度。',
+                    'Sophia': '索菲亚，希腊语中意为"智慧"。你选择了求知，智慧女神在那一刻经过你的身边。',
+                    'Ataraxia': '阿塔拉克西亚，古希腊哲学中"内心的平静"。在混沌的实验室中，你触到了第一缕宁静。'
+                };
+                const meaningText = meanings[name] || '你的旅途刻下了新的印记。';
+                achievementToast.innerHTML = `
+                                <div style="font-size:16px;">✦ 神话之名 ✦</div>
+                                <div style="font-size:22px;margin:6px 0;">${name}</div>
+                                <div style="font-size:13px;color:#c8d6e5;margin-top:6px;line-height:1.6;max-width:380px;">${meaningText}</div>
+                            `;
+                achievementToast.classList.add('show');
+                setTimeout(() => achievementToast.classList.remove('show'), 4000);
+            }
+        }
+        function updateFullCode() {
+            gameState.fullCode = gameState.baseCode + (gameState.suffixes.length > 0 ? '.' + gameState.suffixes.join('.') : '');
+            labCodeEl.textContent = gameState.fullCode;
+            labCodeEl.classList.add('updated');
+            setTimeout(() => labCodeEl.classList.remove('updated'), 1200);
+        }
+
+        // 属性与感染
+        function modifyStat(stat, delta) {
+            if (gameState[stat] !== undefined) gameState[stat] = Math.min(100, Math.max(0, gameState[stat] + delta));
+            updateStatDisplay();
+        }
+        function modifyInfection(delta) {
+    // 桑树守护
+    if (gameState.hasMulberry && gameState.infection >= 50 && delta > 0 && !gameState.hasMulberryGuardUsed) {
+        gameState.hasMulberryGuardUsed = true;
+        achievementToast.innerHTML = '<div style="font-size:16px;">🌿 扶桑的守护</div><div style="font-size:13px;">桑树的力量为你抵御了感染</div>';
+        achievementToast.classList.add('show');
+        setTimeout(() => achievementToast.classList.remove('show'), 2500);
+        updateStatDisplay();
+        return;
+    }
+
+    gameState.infection = Math.min(100, Math.max(0, gameState.infection + delta));
+    
+    // 感染度≥30 获得阿喀琉斯之名
+    if (gameState.infection >= 30 && !gameState.suffixes.includes('Achilles')) {
+        addSuffix('Achilles');
+    }
+    
+    // 感染度达到100，强制触发肉体同化结局
+    if (gameState.infection >= 100) {
+        document.getElementById('text-area').innerHTML = '';
+        document.getElementById('choices').innerHTML = '';
+        
+        if (gameState.location === 'human_base') {
+            gameState.scene = 'ending_infected_base';
+        } else if (gameState.respondedToPlanet === true) {
+            gameState.scene = 'ending_infected_planet';
+        } else if (gameState.respondedToPlanet === false) {
+            gameState.scene = 'ending_infected_survival';
+        } else {
+            gameState.scene = 'ending_infected';
+        }
+        
+        saveGame();
+        renderScene();
+        return;
+    }
+    
+    updateStatDisplay();
+}
+    
+        function updateStatDisplay() {
+            document.getElementById('stat-human').textContent = gameState.human;
+            document.getElementById('stat-logic').textContent = gameState.logic;
+            document.getElementById('stat-nature').textContent = gameState.nature;
+            document.getElementById('stat-divinity').textContent = gameState.divinity;
+            document.getElementById('stat-corruption').textContent = gameState.corruption;
+            document.getElementById('stat-infection').textContent = gameState.infection;
+        }
+
+        // 存档
+        function saveGame() { localStorage.setItem('coronation_star_save', JSON.stringify(gameState)); }
+        function loadGame() {
+            const saved = localStorage.getItem('coronation_star_save');
+            if (saved) {
+                gameState = JSON.parse(saved);
+                updateStatDisplay(); updateFullCode();
+                if (gameState.awakened) applyAwakenedUI();
+                applyRouteUI();
+                return true;
+            }
+            return false;
+        }
+        function restartGame() {
+            localStorage.removeItem('coronation_star_save');
+            document.getElementById('game').classList.remove('awakened-state', 'route-base', 'route-planet', 'route-survival');
+            location.reload();
+        }
+        function newGamePlus() {
+            gameState.weekCount++;
+            gameState.suffixes = [];
+            gameState.human = gameState.logic = gameState.nature = gameState.divinity = gameState.corruption = 0;
+            gameState.infection = 0; gameState.awakened = false; gameState.woodStreak = 0; gameState.fireStreak = 0;
+            gameState.totalInjections = 0; gameState.injectionThisWeek = 0; gameState.week = 1;
+            gameState.location = null; gameState.chapter = 0; gameState.baseDailyCount = 0; gameState.baseKillCount = 0;
+            gameState.respondedToPlanet = null; gameState.hasRabbit = gameState.hasMulberry = gameState.hasBird = false;
+            gameState.rejectedRabbit = gameState.rejectedMulberry = gameState.rejectedBird = false;
+            gameState.hasMulberryGuardUsed = false;
+            gameState.finalChoice = null;
+            gameState.planetDailyCount = 0; gameState.survivalDailyCount = 0;
+            addSuffix('Janus');
+            document.getElementById('game').classList.remove('awakened-state', 'route-base', 'route-planet', 'route-survival');
+            updateFullCode(); updateStatDisplay(); saveGame();
+            gameState.scene = 'node_0_1';
+            renderScene();
+        }
+
+        // 界面主题
+        function applyAwakenedUI() {
+            document.getElementById('game').classList.add('awakened-state');
+        }
+        function applyRouteUI() {
+            const g = document.getElementById('game');
+            g.classList.remove('route-base', 'route-planet', 'route-survival');
+            if (gameState.location === 'human_base') g.classList.add('route-base');
+            else if (gameState.location === 'abandoned_lab') {
+                if (gameState.respondedToPlanet === true) g.classList.add('route-planet');
+                else if (gameState.respondedToPlanet === false) g.classList.add('route-survival');
+            }
+        }
+        // ==================== 试剂文本库 ====================
+        const woodTexts = [
+            "翡翠色的液体散发着淡淡的青草气息。注入时，你感觉有无数细小的根须在血管中轻柔地舒展开来——像春天破土的第一株嫩芽，像创世之初第一缕生命的悸动。",
+            "墨绿色的药剂在灯光下折射出孔雀石般的光泽。刺痛过后，你的指尖微微发痒，好像有什么东西正从指甲下方，悄悄地、固执地想要生长出来。",
+            "这一次是木系试剂。液体泛着淡淡的绿色荧光，进入体内的瞬间，你隐约闻到了雨后泥土的气息——尽管你从未见过真正的雨。"
+        ];
+        const metalTexts = [
+            "金色的液体沿着透明的管道缓缓注入。你的血管里泛起一种冰凉的金属触感，像有无数细小的铃铛在血液中轻轻摇晃。",
+            "试剂泛着金色的光泽，在灯光下如同液态的黄金。注入后，你的思绪变得异常清晰，但四肢却有些僵硬。"
+        ];
+        const waterTexts = [
+            "淡蓝色的液体流动得格外温柔，像是活的。进入体内后，你能感觉到它在你血管里轻柔地打着旋，像一条刚刚苏醒的溪流，带来了关于「情感」的第一个秘密。",
+            "水蓝色的液体带着微微的凉意。注射时你打了个寒颤，但那不是冷——是一种奇异的清爽，像某种坚硬的东西在你的胸腔里被悄悄化开了。"
+        ];
+        const fireTexts = [
+            "火红的药剂在针管中翻滚，像被压缩到极限的岩浆。注入的瞬间，灼烧感从手臂蔓延到胸口——你咬紧牙关，额头上渗出了细密的汗珠。",
+            "橙红色的药剂发出微弱的噼啪声，仿佛有无数火星在液体中跳跃。进入后，你觉得自己的血管里流淌的不再是血液，而是一道即将决堤的熔岩。"
+        ];
+        const earthTexts = [
+            "黄褐色的液体粘稠得像融化的陶土。注入后，你感到一种沉重的踏实感——像被埋在温暖的泥土里，什么也不必想。",
+            "土褐色的药剂在灯光下泛着温润的光。注射时没有什么特别的感觉——只有一种恒久的耐心，在血液里缓缓沉淀。"
+        ];
+        const spaceTexts = [
+            "透明——但又不像透明。试管中的液体本身仿佛在扭曲光线，周围的空气出现了隐隐的波纹。注入的瞬间，你感到自己膨胀到了整个宇宙，又坍缩回了这个小小的培养罐。"
+        ];
+        const spiritTexts = [
+            "银白色的液体中，有无数细小的光点在缓缓旋转，像微缩的星云。注入后，你的脑海中忽然涌进了许多知识——你看不懂大屏上的数据，但你开始理解它们的逻辑。"
+        ];
+
+        // ==================== 节点0-1 ====================
+        function handleNode01(choice) {
+            let result = '';
+            switch (choice) {
+                case 'A': modifyStat('divinity', 2); modifyStat('human', -1); modifyStat('corruption', 1); result = '<p>不喜灯光的念头一闪而过。但你只是个困在罐中的婴儿——你什么也做不了。</p>'; break;
+                case 'B': modifyStat('logic', 2); modifyStat('nature', -1); addSuffix('Ataraxia'); result = '<p>你伸出手，在淡蓝色的液体中轻轻划动。温热的流体顺从地让开，又在你收回手时温柔地合拢。你触到了第一缕平静。</p>'; break;
+                case 'C': modifyStat('human', 2); modifyStat('divinity', -1); result = '<p>你攥住一根数据线用力拉扯。力气太小了，什么也没发生。但研究员皱了皱眉——她注意到了你的挣扎。</p>'; break;
+                case 'D': modifyStat('logic', 2); gameState.linHuaFavor += 1; addSuffix('Sophia'); result = '<p>你眯起眼睛，试图辨认屏幕上跳动的符号。研究员微微点了下头，在她无框眼镜后面，有一丝几不可察的欣赏。</p>'; break;
+                case 'E': modifyStat('nature', 2); modifyStat('logic', -1); result = '<p>你抬起手捂住耳朵。研究员在记录板上写：听觉发育正常。但你不知道，你真正想隔绝的不是声音，而是这个世界的冰冷。</p>'; break;
+            }
+            gameState._node01Result = result;
+            gameState.scene = 'node_0_1_result';
+            saveGame(); renderScene();
+        }
+
+        // ==================== 注射逻辑 ====================
+        function startInjection() {
+            gameState.injectionThisWeek = 0;
+            gameState.scene = 'node_0_2_injecting'; renderScene();
+        }
+        function performInjection() {
+            if (gameState.injectionThisWeek >= 3) {
+                if (gameState.woodStreak >= 3 && !gameState.awakened) { gameState.scene = 'node_0_2_awakened'; renderScene(); return; }
+                gameState.scene = 'node_0_2_week_end'; renderScene(); return;
+            }
+            const rand = Math.random();
+            let type, textPool, effect = {}, color = '';
+            const isMutation = rand < 0.05;
+            if (isMutation) {
+                const mRand = Math.random();
+                if (mRand < 0.4) { type = '空间'; textPool = spaceTexts; effect = { divinity: 5, nature: 1 }; addSuffix('Hermes'); }
+                else if (mRand < 0.8) { type = '精神'; textPool = spiritTexts; effect = { logic: 5, nature: 1 }; addSuffix('Oracle'); }
+                else if (mRand < 0.95) { type = '时间'; textPool = ["这种颜色你没有见过——它似乎存在于光谱之外。注射后，你看到了培养罐里的液体蒸发又凝结，在一个呼吸间重复了无数次。"]; effect = { divinity: 3, logic: 3, nature: 1 }; addSuffix('Chronos'); }
+                else { type = '混沌'; textPool = ["液体的颜色在不断变化——赤红、碧绿、深蓝、金黄，像一道被压缩到试管里的彩虹。"]; effect = { human: 2, logic: 2, nature: 2, divinity: 2, corruption: 3 }; addSuffix('Tiamat'); }
+                color = '#f5cd79';
+            } else {
+                const baseRand = Math.random();
+                if (baseRand < 0.2) { type = '金'; textPool = metalTexts; effect = { nature: 1, logic: 1 }; color = '#f5cd79'; }
+                else if (baseRand < 0.4) { type = '木'; textPool = woodTexts; effect = { nature: 2 }; color = '#78e08f'; }
+                else if (baseRand < 0.6) { type = '水'; textPool = waterTexts; effect = { nature: 1, human: 1 }; color = '#74b9ff'; }
+                else if (baseRand < 0.8) { type = '火'; textPool = fireTexts; effect = { nature: 1, corruption: 1 }; color = '#e77f67'; }
+                else { type = '土'; textPool = earthTexts; effect = { nature: 1 }; color = '#b2bec3'; }
+            }
+            const idx = Math.floor(Math.random() * textPool.length);
+            let injectHTML = '<p style="color:' + color + ';">💉 第' + (gameState.totalInjections + 1) + '次注射——' + (isMutation ? '✦变异试剂✦ ' : '') + type + '系</p><p>' + textPool[idx] + '</p>';
+            if (type === '木') gameState.woodStreak++;
+            if (type === '火') { gameState.fireStreak++; if (gameState.fireStreak >= 2) { modifyInfection(5); injectHTML += '<p class="danger">连续的火系试剂让你的体内积了火毒——伤口隐隐发烫。</p>'; } }
+            else gameState.fireStreak = 0;
+            gameState.totalInjections++; gameState.injectionThisWeek++;
+            for (let s in effect) modifyStat(s, effect[s]);
+            textArea.innerHTML += injectHTML;
+            textArea.innerHTML += '<p class="system-text">[ 木系累计：' + gameState.woodStreak + ' | 本周剩余：' + (3 - gameState.injectionThisWeek) + '次 ]</p>';
+            textArea.scrollTop = textArea.scrollHeight;
+            if (gameState.woodStreak >= 3 && !gameState.awakened) {
+                choicesDiv.innerHTML = '';
+                setTimeout(() => { gameState.scene = 'node_0_2_awakened'; renderScene(); }, 500);
+                return;
+            }
+            if (gameState.totalInjections >= 6 && !gameState.awakened && !gameState.suffixes.includes('Sisyphus')) addSuffix('Sisyphus');
+            choicesDiv.innerHTML = gameState.injectionThisWeek >= 3 ? '<button onclick="finishWeek()">本周注射完毕</button>' : '<button onclick="performInjection()">继续注射</button>';
+            saveGame();
+        }
+        function finishWeek() {
+            if (gameState.woodStreak >= 3 && !gameState.awakened) gameState.scene = 'node_0_2_awakened';
+            else gameState.scene = 'node_0_2_week_end';
+            renderScene();
+        }
+
+        // 觉醒选择
+        function handleAwakenChoice(choice) {
+            let result = '';
+            if (choice === 'expose') {
+                modifyStat('human', 3); gameState.linHuaFavor += 1; modifyStat('nature', -1);
+                gameState.chosenExposure = 'expose'; addSuffix('Prometheus');
+                result = '<p>你没有收回那条藤蔓。迎着研究员震惊的目光，你安静地与她对视。普罗米修斯盗来了火种，而你——你带来了生命。</p>';
+            } else {
+                modifyStat('logic', 2); modifyStat('nature', 2); modifyStat('human', -1); modifyStat('corruption', 1);
+                gameState.chosenExposure = 'hide'; addSuffix('Hestia');
+                result = '<p>藤蔓悄无声息地缩回你的指尖。研究员以为自己看错了。灶神的火焰不需要被所有人看见，它在暗处静静燃烧。</p>';
+            }
+            gameState._awakenResult = result;
+            gameState.scene = 'node_0_2_awakened_result';
+            saveGame(); renderScene();
+        }
+        // ==================== 节点0-3 ====================
+        function handleNode03(choice) {
+            let result = '';
+            switch (choice) {
+                case 'A': modifyStat('human', 3); gameState.linHuaFavor += 2; modifyStat('divinity', -1); gameState.location = 'human_base'; addSuffix('Adam'); result = '<p>恐惧冲破了防线。你放声大哭——那是你在这个世界上发出的第一个真正属于自己的声音。研究员林华冲向你，将你从罐中捞起，紧紧抱在怀里。</p>'; break;
+                case 'B': modifyStat('logic', 3); modifyStat('human', -2); modifyStat('corruption', 2); gameState.location = 'abandoned_lab'; result = '<p>你面无表情地注视着一切。丧尸对你没有丝毫兴趣。混乱过后，实验室陷入了死寂，而你独自漂浮在寂静之中。</p>'; break;
+                case 'C': modifyStat('divinity', 3); modifyStat('logic', -1); modifyInfection(5); gameState.location = 'abandoned_lab'; result = '<p>你不知道发生了什么，只是茫然安静地看着。碎玻璃划破了外壁，几滴外面的空气渗入——带着某种你尚不理解的危险。</p>'; break;
+                case 'D': modifyStat('nature', 3); modifyStat('human', -1); gameState.location = 'abandoned_lab'; addSuffix('Narcissus'); result = '<p>丧尸腐烂的额头上，竟然长出了几朵淡白色的小花。你盯着那些花瓣看了很久，几乎忘记了恐惧。</p>'; break;
+            }
+            gameState.escapeMethod = choice;
+            gameState._node03Result = result;
+            gameState.scene = 'node_0_3_result';
+            saveGame(); renderScene();
+        }
+
+        // ==================== 人类基地日常事件库 ====================
+        const events = [
+            { text: '<p>林华把你带到一间小小的隔间。一张折叠床，一盏应急灯，这就是你的房间了。你看着光秃秃的混凝土墙壁，觉得它像另一个培养罐。</p>', eff: { human: 1 }, stage: 1 },
+            { text: '<p>一个穿着旧军装的男人在走廊里拦住了你。"你就是那个Eden？"他打量你像在检查一件武器。</p>', eff: { logic: 1, corruption: 1 }, stage: 1 },
+            { text: '<p>基地食堂里，排队打饭的人们看到你过来，队伍不自觉地往两边分开了。一个头发花白的厨娘探出头来，又往你餐盘里多加了一勺菜。</p>', eff: { human: 1 }, stage: 1 },
+            { text: '<p>一个和你差不多大的男孩在走廊里撞上了你，手里的弹壳撒了一地。你蹲下来一颗颗捡起来，它们带着旧世界的锈迹。</p>', eff: { human: 1 }, stage: 1 },
+            { text: '<p>基地的公示栏上贴着一张旧报纸，旁边有人用红笔写了一行字："都是骗人的。"墨迹已经干涸了很久。</p>', eff: { logic: 1 }, stage: 1 },
+            { text: '<p>林华塞给你一本旧世界的植物图鉴。你第一次知道，世界上有那么多你从未见过的绿色生命。</p>', eff: { human: 1, logic: 1 }, stage: 2 },
+            { text: '<p>退役的士兵教你翻越障碍物。你摔了很多跤，但成功时他露出了第一个笑容："姑娘，你比我们所有人都有韧性。"</p>', eff: { human: 1 }, stage: 2 },
+            { text: '<p>夜里你走上基地的围墙。哨兵指着天空说那是北斗七星。你觉得星星在对你眨眼。</p>', eff: { divinity: 1, logic: 1 }, stage: 2 },
+            { text: '<p>你开始在食堂帮工，学会了削土豆皮和分配配给券。厨娘说你的手很巧。</p>', eff: { human: 1, nature: 1 }, stage: 2 },
+            { text: '<p>林华带你去储藏室。你翻开一本相册，里面是一个家庭的笑容。她沉默了很久："不重要了。"</p>', eff: { logic: 1, human: 1 }, stage: 2 },
+            { text: '<p>第一次有人对你笑了。厨娘递给你一个用旧报纸包着的烤土豆。"看你瘦的，多吃点。"</p>', eff: { human: 2 }, stage: 3 },
+            { text: '<p>一个女孩偷偷塞给你一颗糖，包装纸已经磨损。糖在嘴里融化，你理解了一些比实验数据更重要的东西。</p>', eff: { human: 2 }, stage: 3 },
+            { text: '<p>管温室的老人对你招了招手。你在那里种下了一颗种子。几天后它发芽了，绿色的芽尖顶开泥土。</p>', eff: { nature: 2 }, stage: 3 },
+            { text: '<p>之前躲着你的男孩又出现了，递给你一颗擦得锃亮的弹壳。"我觉得你只是不一样。"</p>', eff: { human: 2 }, stage: 3 },
+            { text: '<p>厨娘生病了，你替她在食堂值了一天班。有人对你说了声"谢谢"。</p>', eff: { human: 2, logic: 1 }, stage: 3 },
+            { text: '<p>你找到一本幸存者的日记。最后一页写着："今天又少了三个人。"你在空白页上写了："你坚持到了有人读到这行字的时候。"</p>', eff: { logic: 1, divinity: 1 }, stage: 3 },
+            { text: '<p>医疗官为你注射了疫苗。林华摸了摸你的头。那是你第一次确信，被触碰可以不是冰冷的。</p>', eff: { corruption: -1 }, stage: 4 },
+            { text: '<p>"今天你跟我们一起出外勤。"曾经质问你的军官递给你一把旧时代的战术刀。</p>', eff: { logic: 1, human: 1 }, stage: 4 },
+            { text: '<p>林华深夜来到你房间，穿着一件旧毛衣。"你恨我们吗？"你摇摇头。那双冷淡的眼睛里有什么东西碎了。</p>', eff: { human: 2, corruption: -1 }, stage: 4 },
+            { text: '<p>追悼会上有人唱起旧世界的挽歌。你不会唱，但嘴唇也在轻轻跟着动。</p>', eff: { human: 2, divinity: 1 }, stage: 4 },
+            { text: '<p>温室里你收获了自己种的第一批蔬菜。那天晚上喝着自己种的菜做的汤，你意识到自己第一次为这个世界创造了点什么。</p>', eff: { nature: 2, human: 1 }, stage: 4 },
+            { text: '<p>那个总是躲着你的男孩坐到你旁边："你能教我那种植物的事吗？"你指着叶子说："这叫子叶。"</p>', eff: { human: 2, nature: 1 }, stage: 4 }
+        ];
+
+        function triggerBaseAwakening() {
+            gameState.awakened = true; gameState.chosenExposure = 'expose';
+            if (!gameState.suffixes.includes('Prometheus')) addSuffix('Prometheus');
+            modifyStat('nature', 5); modifyStat('human', 2);
+            applyAwakenedUI();
+            typeWriter('<p>在温室里，指尖突然传来熟悉的痒意。一根翠绿的藤蔓从食指钻出。林华手里的记录板差点滑落。</p><p class="awaken">植物系异能——在末世的微光中，你终于取回了自己的力量。</p>', textArea, 50, () => {
+                choicesDiv.innerHTML = '<button onclick="startBaseDaily()">继续日常</button>';
+                saveGame();
+            });
+        }
+
+        function startBaseDaily() {
+            if (gameState.baseDailyCount >= 10) {
+                if (!gameState.awakened) {
+                    typeWriter('<p>林华摇了摇头。<span class="golden">"还不是时候。"</span>你还没有觉醒异能，外出太危险了。</p>', textArea, 50, () => {
+                        choicesDiv.innerHTML = '<button onclick="startBaseDaily()">继续日常</button>';
+                        saveGame();
+                    });
+                    return;
+                }
+                gameState.scene = 'chapter1_mission'; renderScene(); return;
+            }
+            if (!gameState.awakened && gameState.baseDailyCount >= 7) { triggerBaseAwakening(); return; }
+            let currentStage;
+            if (gameState.baseDailyCount < 3) currentStage = 1;
+            else if (gameState.baseDailyCount < 6) currentStage = 2;
+            else if (gameState.baseDailyCount < 9) currentStage = 3;
+            else currentStage = 4;
+            const stagedEvents = events.filter(e => e.stage === currentStage);
+            const event = stagedEvents[Math.floor(Math.random() * stagedEvents.length)];
+            gameState.baseDailyCount++;
+            for (let s in event.eff) modifyStat(s, event.eff[s]);
+            if (gameState.baseDailyCount === 3 && !gameState.suffixes.includes('Eve')) addSuffix('Eve');
+            if (gameState.logic >= 40 && !gameState.suffixes.includes('Athena')) addSuffix('Athena');
+            typeWriter(event.text + '<p class="system-text">[ 日常次数：' + gameState.baseDailyCount + '/10 ]</p>', textArea, 50, () => {
+                choicesDiv.innerHTML = '<button onclick="startBaseDaily()">继续日常</button>';
+                saveGame();
+            });
+        }
+
+        function handleMission(kill) {
+            if (kill) {
+                modifyStat('human', 2); modifyStat('corruption', 1); modifyStat('nature', -1); modifyInfection(5);
+                gameState.baseKillCount++;
+                if (gameState.baseKillCount >= 10 && !gameState.suffixes.includes('Houyi')) addSuffix('Houyi');
+                typeWriter('<p>藤蔓贯穿了丧尸的头颅。它倒下时发出一声像是叹息的声音。</p><p class="system-text">[ 累积击杀：' + gameState.baseKillCount + ' ]</p>', textArea, 50, () => {
+                    choicesDiv.innerHTML = '<button onclick="handleMission(true)">继续击杀</button><button onclick="handleMission(false)">放走这只丧尸</button><button onclick="returnToBase()">返回基地</button>';
+                });
+            } else {
+                modifyStat('nature', 3); modifyStat('logic', -1);
+                typeWriter('<p>你收回了藤蔓。丧尸摇摇晃晃地消失在了废墟的阴影中。</p>', textArea, 50, () => {
+                    choicesDiv.innerHTML = '<button onclick="handleMission(true)">击杀下一只</button><button onclick="handleMission(false)">继续放走</button><button onclick="returnToBase()">返回基地</button>';
+                });
+            }
+            saveGame();
+        }
+        function returnToBase() {
+            if (gameState.baseKillCount >= 10) gameState.scene = 'final_chapter_intro';
+            else gameState.scene = 'chapter1_base_daily';
+            renderScene();
+        }
+        function goMissionAgain() {
+    gameState.scene = 'chapter1_mission';
+    renderScene();
+}
+
+function goToFinalChoice() {
+    gameState.scene = 'final_chapter_intro';
+    renderScene();
+}
+        // ==================== 废弃实验室 ====================
+        function handlePlanetCall(choice) {
+            if (choice === 'respond') {
+                gameState.respondedToPlanet = true; applyRouteUI();
+                modifyStat('nature', 4); modifyStat('divinity', 2); gameState.planetFavor += 3; modifyStat('logic', -2);
+                addSuffix('Gaia');
+                typeWriter('<p>你回应了那个声音。世界<em>打开</em>了。你能感觉到墙壁后面一棵野草正从混凝土缝隙中奋力向上。</p><p class="golden">"你是我的孩子。"</p>', textArea, 50, () => {
+                    gameState.scene = 'planet_daughter_daily'; renderScene();
+                });
+            } else {
+                gameState.respondedToPlanet = false; applyRouteUI();
+                modifyStat('logic', 3); modifyStat('human', 1); modifyStat('divinity', 2); modifyStat('nature', -3);
+                addSuffix('Cain');
+                typeWriter('<p>你没有回应。它消失了——或者你让它消失了。现在你只有你自己。</p>', textArea, 50, () => {
+                    gameState.scene = 'survival_intro'; renderScene();
+                });
+            }
+            saveGame();
+        }
+
+        // 宠物随机事件库
+        const petRandomEvents = {
+            'rabbit': {
+                text: '<p>门口传来窸窣声——一只灰色的野兔站在门槛上，用黑色的眼睛安静地看着你。</p>',
+                adoptBtn: '伸出手让它靠近', rejectBtn: '不去理会'
+            },
+            'mulberry': {
+                text: '<p>你在培养罐碎片中发现了一颗种子，表面布满细密的纹路，像缩微的星空地图。</p>',
+                adoptBtn: '将它埋进瓷砖裂缝中', rejectBtn: '放在一边'
+            },
+            'bird': {
+                text: '<p>窗台上，一只幼鸟蜷缩在碎玻璃间，翅膀渗着血，暗红色的羽毛像冷却前的余烬。</p>',
+                adoptBtn: '轻轻捧起它包扎伤口', rejectBtn: '转身离开'
+            }
+        };
+
+        function adoptPet(pet) {
+            let text = '';
+            switch (pet) {
+                case 'rabbit': gameState.hasRabbit = true; modifyStat('nature', 2); modifyStat('human', 1); gameState.planetFavor += 1; addSuffix('Artemis'); text = '<p>野兔把下巴搁在了你的掌心里。你给它取名叫<span class="golden">"耳朵"</span>。</p>'; break;
+                case 'mulberry': gameState.hasMulberry = true; modifyStat('nature', 3); modifyStat('divinity', 1); gameState.planetFavor += 2; addSuffix('Yggdrasil'); text = '<p>你把种子埋进瓷砖裂缝中。星球意识说：<span class="golden">"在太阳升起的地方，我曾见过它的祖先。"</span></p>'; break;
+                case 'bird': gameState.hasBird = true; modifyStat('human', 2); modifyStat('nature', 1); gameState.planetFavor += 1; addSuffix('Phoenix'); text = '<p>幼鸟在你掌心里安静下来。你心里已经有了一个名字——菲尼克斯。</p>'; break;
+            }
+            typeWriter(text, textArea, 50, () => { checkAllPets(); gameState.scene = 'planet_daughter_daily'; renderScene(); });
+            saveGame();
+        }
+        function rejectPet(pet) {
+            switch (pet) {
+                case 'rabbit': gameState.rejectedRabbit = true; gameState.planetFavor -= 1; modifyStat('logic', 1); modifyStat('corruption', 2); typeWriter('<p>野兔抖了抖耳朵，转身消失在废墟的阴影中。</p>', textArea, 50, () => { checkAllRejected(); gameState.scene = 'planet_daughter_daily'; renderScene(); }); break;
+                case 'mulberry': gameState.rejectedMulberry = true; gameState.planetFavor -= 2; modifyStat('logic', 2); modifyStat('corruption', 1); typeWriter('<p>你把种子扔到角落。星球意识沉默了很久。</p>', textArea, 50, () => { checkAllRejected(); gameState.scene = 'planet_daughter_daily'; renderScene(); }); break;
+                case 'bird': gameState.rejectedBird = true; gameState.planetFavor -= 1; modifyStat('logic', 1); modifyStat('corruption', 2); typeWriter('<p>扑腾声停了。你不知道它是自己飞走了，还是被什么带走了。</p>', textArea, 50, () => { checkAllRejected(); gameState.scene = 'planet_daughter_daily'; renderScene(); }); break;
+            }
+            saveGame();
+        }
+        function checkAllPets() {
+            if (gameState.hasRabbit && gameState.hasMulberry && gameState.hasBird && !gameState.suffixes.includes('Cybele')) addSuffix('Cybele');
+        }
+        function checkAllRejected() {
+            if (gameState.rejectedRabbit && gameState.rejectedMulberry && gameState.rejectedBird && gameState.corruption >= 50 && !gameState.suffixes.includes('Lilith')) addSuffix('Lilith');
+        }
+
+        // 星球线日常
+        const planetDailyEvents = [
+            { text: '<p>星球意识教你辨认每一种植物的种子。你蹲在废墟的裂缝前，用指尖拨开泥土。</p>', eff: { nature: 2, logic: 1 } },
+            { text: '<p>你在废墟中发现一小片没有污染的土壤，花了整个下午把碎玻璃清理干净。</p>', eff: { nature: 2, divinity: 1 } },
+            { text: '<p>她给你看了一段地球的记忆：城市亮着灯，河流清澈，鸟群飞过天空。</p>', eff: { divinity: 2, corruption: -1 } },
+            { text: '<p>一粒蒲公英的种子飘到你手心里。星球意识说：<span class="golden">"生命也在寻找出路。"</span></p>', eff: { nature: 1, divinity: 1 } },
+            { text: '<p>你学会了用藤蔓攀爬墙壁。几天后藤蔓开出了淡紫色的小花，你叫它牵牛花。</p>', eff: { nature: 2, human: 1 } },
+            { text: '<p>一场雨落了下来。这是你第一次淋雨——雨水是冷的，带着一种野生的气息。</p>', eff: { nature: 2, divinity: 1 } },
+            { text: '<p>你闭上眼睛把手掌贴在地上。地下深处，一棵老树的根还在跳动。</p>', eff: { divinity: 2, nature: 1 } },
+            { text: '<p>废墟裂缝中长出了一丛蘑菇。星球意识说：<span class="golden">"月亮在替这个世界解毒。"</span></p>', eff: { nature: 1, logic: 1 } },
+            { text: '<p>你开始催生一棵白杨。每一天它都高一点点，你醒来的第一件事就是去看它。</p>', eff: { nature: 3, divinity: 1 } },
+            { text: '<p>一具丧尸上长出了野花。星球意识说：<span class="golden">"生命总会找到回归的方式。"</span></p>', eff: { divinity: 2, nature: 1, corruption: 1 } }
+        ];
+        function startPlanetDaily() {
+            if (gameState.planetDailyCount === undefined) gameState.planetDailyCount = 0;
+            if (!gameState.awakened && gameState.planetDailyCount === 0) {
+                gameState.planetDailyCount++;
+                gameState.awakened = true; gameState.chosenExposure = 'expose';
+                modifyStat('nature', 5); modifyStat('divinity', 3);
+                if (!gameState.suffixes.includes('Prometheus')) addSuffix('Prometheus');
+                applyAwakenedUI();
+                typeWriter('<p>星球意识沉默了一会儿。<span class="golden">"我的孩子，让我唤醒你体内沉睡的种子。"</span>一股暖流从脚下涌入，藤蔓破土而出。</p><p class="awaken">植物系异能——在星球的低语中，你取回了与生俱来的力量。</p>', textArea, 50, () => {
+                    choicesDiv.innerHTML = '<button onclick="startPlanetDaily()">继续学习</button><button onclick="handlePlanetQuest()">响应星球的请求</button>';
+                    saveGame();
+                });
+                return;
+            }
+            const event = planetDailyEvents[Math.floor(Math.random() * planetDailyEvents.length)];
+            for (let s in event.eff) modifyStat(s, event.eff[s]);
+            typeWriter(event.text, textArea, 50, () => {
+                choicesDiv.innerHTML = '<button onclick="startPlanetDaily()">继续学习</button><button onclick="handlePlanetQuest()">响应星球的请求</button>';
+                saveGame();
+            });
+        }
+        function handlePlanetQuest() {
+            gameState.planetQuestReceived = true;
+            modifyStat('divinity', 3); gameState.planetFavor += 3;
+            typeWriter('<p>大地在呻吟。丧尸的数量太多了。<span class="golden">"我的孩子，我需要你。"</span></p>', textArea, 50, () => {
+                gameState.scene = 'final_chapter_intro'; renderScene();
+            });
+            saveGame();
+        }
+
+        // 独立生存线日常
+        const survivalDailyEvents = [
+            { text: '<p>你在废墟中捡到一本烧掉一半的日记。最后一页写着："请帮我照顾我的猫。她在三楼。我叫林蔚。"</p>', eff: { human: 2, logic: 1 } },
+            { text: '<p>你找到一个旧背包，里面有半瓶水、一卷绷带和一张全家福。</p>', eff: { human: 2 } },
+            { text: '<p>荒野中远远看到一个人影。他举起手——不是求救，是告别。</p>', eff: { human: 2, logic: 1 } },
+            { text: '<p>你找到一台还能用的收音机，里面播放着旧世界的音乐。你发现自己哭了。</p>', eff: { human: 2, divinity: 1 } },
+            { text: '<p>半倒塌的楼里是一间图书馆。有一本书的封面上画着一颗蓝色星球，写着《地球》。</p>', eff: { logic: 2, divinity: 1 } },
+            { text: '<p>一只流浪狗跟了你一整天。你扔了一块干粮过去，它摇着尾巴走近了一点。</p>', eff: { human: 1, nature: 1 } },
+            { text: '<p>你在废墟中摸到一枚旧硬币，上面铸着一种你不认识的文字。</p>', eff: { logic: 1 } },
+            { text: '<p>夜里你蜷缩在废弃车库里数星星。北斗七星在看着你——不是审判，是守望。</p>', eff: { divinity: 2, logic: 1 } },
+            { text: '<p>干涸的河床上发现了几枚新鲜的人类脚印。你不是这片荒野上唯一活着的人。</p>', eff: { human: 1, logic: 1 } },
+            { text: '<p>你找到一张旧地图。你在地图上画了一个小小的圈：你自己的坐标系。</p>', eff: { logic: 2 } },
+            { text: '<p>你在废墟中被一只丧尸逼入绝境。绝望中你闭上眼睛——藤蔓从掌心破出，刺穿了丧尸的头颅。</p>', eff: { nature: 5, divinity: 2 }, awakenTrigger: true }
+        ];
+        function triggerSurvivalAwakening() {
+            gameState.awakened = true; gameState.chosenExposure = 'expose';
+            modifyStat('nature', 5); modifyStat('divinity', 2);
+            if (!gameState.suffixes.includes('Prometheus')) addSuffix('Prometheus');
+            applyAwakenedUI();
+            typeWriter('<p>丧尸将你逼入绝境。你绝望地闭上眼——藤蔓从掌心破出，刺穿了它的头颅。</p><p class="awaken">植物系异能——在最深的绝望里，你终于握住了生命。</p>', textArea, 50, () => {
+                choicesDiv.innerHTML = '<button onclick="startSurvivalDaily()">继续探索</button><button onclick="solveAlone()">尝试独自解决丧尸</button>';
+                saveGame();
+            });
+        }
+        function startSurvivalDaily() {
+            if (gameState.survivalDailyCount === undefined) gameState.survivalDailyCount = 0;
+            gameState.survivalDailyCount++;
+            if (!gameState.awakened && gameState.survivalDailyCount >= 3) { triggerSurvivalAwakening(); return; }
+            const event = survivalDailyEvents[Math.floor(Math.random() * survivalDailyEvents.length)];
+            for (let s in event.eff) modifyStat(s, event.eff[s]);
+            typeWriter(event.text, textArea, 50, () => {
+                if (event.awakenTrigger && !gameState.awakened) {
+                    gameState.awakened = true; gameState.chosenExposure = 'expose';
+                    if (!gameState.suffixes.includes('Prometheus')) addSuffix('Prometheus');
+                    applyAwakenedUI();
+                    textArea.innerHTML += '<p class="awaken">植物系异能——在死亡的边缘，你终于握住了生命。</p>';
+                }
+                choicesDiv.innerHTML = '<button onclick="startSurvivalDaily()">继续探索</button><button onclick="solveAlone()">尝试独自解决丧尸</button>';
+                saveGame();
+            });
+        }
+        function solveAlone() {
+            modifyStat('divinity', 3); modifyStat('nature', 5);
+            addSuffix('Odysseus');
+            typeWriter('<p>你没有寻找任何人。藤蔓从干涸的土壤中破土而出——一整片绿色的潮汐。</p>', textArea, 50, () => {
+                gameState.scene = 'final_chapter_intro'; renderScene();
+            });
+            saveGame();
+        }
+        function discoverBase() {
+            gameState.location = 'human_base'; gameState.linHuaFavor += 1; addSuffix('Noah');
+            applyRouteUI();
+            typeWriter('<p>荒野的尽头，你看到了炊烟。诺亚方舟在废墟中找到了你。</p>', textArea, 50, () => {
+                gameState.scene = 'chapter1_base_daily'; renderScene();
+            });
+            saveGame();
+        }
+        // ==================== 终章与结局 ====================
+        function makeFinalChoice(choice) {
+            gameState.finalChoice = choice;
+            if (choice === 'sacrifice') { gameState.infection = 0; modifyStat('nature', 10); modifyStat('human', 5); gameState.planetFavor += 5; addSuffix('Nüwa'); }
+            else if (choice === 'starward') { modifyStat('divinity', 5); modifyStat('logic', 5); gameState.linHuaFavor += 3; addSuffix('Pangu'); if (gameState.divinity >= 50) addSuffix("Chang'e"); }
+            else { modifyStat('logic', 5); modifyStat('corruption', 5); }
+            updateStatDisplay();
+            const ending = determineEnding();
+            gameState.scene = 'ending_' + ending;
+            saveGame(); renderScene();
+        }
+        function determineEnding() {
+            const h = gameState.human, l = gameState.logic, n = gameState.nature, d = gameState.divinity, c = gameState.corruption;
+            if (c >= 60) {
+    if (gameState.location === 'human_base') return 'corrupted_base';
+    if (gameState.respondedToPlanet === true) return 'corrupted_planet';
+    if (gameState.respondedToPlanet === false) return 'corrupted_survival';
+    return 'corrupted';  // 兜底
+}
+            if (gameState.weekCount >= 2 && d >= 70 && c >= 50) { addSuffix('Morpheus'); return 'bigDream'; }
+            if (gameState.finalChoice === 'sacrifice' && h >= 70 && c <= 30) return 'watcher';
+            if (gameState.finalChoice === 'sacrifice' && n >= 70 && c <= 30) return 'motherOfAll';
+            if (gameState.finalChoice === 'sacrifice') {
+                if (gameState.location === 'human_base') return 'sacrifice_devoted_base';
+                if (gameState.respondedToPlanet === true) return 'sacrifice_devoted_planet';
+                if (gameState.respondedToPlanet === false) return 'sacrifice_devoted_survival';
+                return 'sacrifice_devoted';
+            }
+            if (gameState.finalChoice === 'starward' && c < 60) return 'explorer';
+            if (l >= 60) return 'observer';
+            if (Math.max(h, l, n, d) - Math.min(h, l, n, d) <= 20) return 'fireOfCivilization';
+            return 'explorer';
+        }
+
+        // ==================== 结局文本 ====================
+        // 保底献祭结局的三个分支
+        function renderSacrificeDevotedBase() {
+            typeWriter('<p>你闭上眼睛，将力量倾泻而出。</p><p>你听见林华在走廊里奔跑的脚步声……你尝到了那颗糖的甜味……你想起厨娘多加的那一勺菜、士兵教翻越障碍、哨兵指给你看北斗七星。</p><p class="awaken">—— 虔诚之献 ——</p><p class="golden">不是每一个献祭都需要成为传说。有些献祭，安静得只有一颗心能够听见。</p>', textArea, 45, () => {
+                choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>';
+            });
+        }
+        function renderSacrificeDevotedPlanet() {
+            typeWriter('<p>你闭上眼睛，将力量倾泻而出。</p><p>根须从指尖延伸出去，穿过碎裂的瓷砖和焦黑的土壤，抵达地球温暖的内核。你想起星球意识教你辨认种子，想起桑树、兔子和小鸟。</p><p class="awaken">—— 虔诚之献 ——</p><p class="golden">大地之母失去了一个孩子，但学会了何谓被爱。</p>', textArea, 45, () => {
+                choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>';
+            });
+        }
+        function renderSacrificeDevotedSurvival() {
+            typeWriter('<p>你闭上眼睛，将力量倾泻而出。</p><p>你记得荒野里那缕炊烟，那本烧掉一半的日记，北斗七星下的守望，那只陪你走了一段路的流浪狗。你这些年来都是一个人，但你从未停止活着。</p><p class="awaken">—— 虔诚之献 ——</p><p class="golden">孤独者的献祭无人见证。但大地记得每一滴落在它身上的血。</p>', textArea, 45, () => {
+                choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>';
+            });
+        }
+        // ==================== 场景渲染 ====================
+        function renderScene() {
+            textArea.innerHTML = '';
+            choicesDiv.innerHTML = '';
+            updateStatDisplay();
+            updateFullCode();
+
+            switch (gameState.scene) {
+                case "node_0_1":
+                    const node01Text = `<p>黑暗。</p><p>无尽的、温暖的黑暗——然后，光来了。</p><p>白到刺目的光从头顶倾泻而下，像一柄利刃剖开了混沌。你在<em>水</em>里——可你能够呼吸。</p><p>你的肌肤上贴着无数传感器，数据线连接着金属壁。面前悬浮着一块大屏，上面的数字和波形图以你尚不能理解的节奏闪烁着。</p><p>然后，你听见了脚步声。一个穿白大褂的身影停在你面前，无框眼镜后面一双冷淡的眼睛打量着你。</p><p class="golden">"醒了。Eden-8。"</p><p class="system-text">[ 初始编号：Eden-8 ]</p>`;
+                    typeWriter(node01Text, textArea, 50, () => {
+                        choicesDiv.innerHTML = `
+                                <button onclick="handleNode01('A')">你被灯光刺痛，心里生出一种说不清的抵触。</button>
+                                <button onclick="handleNode01('B')">你试探着伸出手，触碰周身的液体。</button>
+                                <button onclick="handleNode01('C')">你攥住一根数据线，用力拉扯。</button>
+                                <button onclick="handleNode01('D')">你眯起眼睛，努力想要看清屏幕上闪烁的符号。</button>
+                                <button onclick="handleNode01('E')">你抬起手捂住耳朵——这里太吵了。</button>
+                            `;
+                    });
+                    break;
+                case "node_0_1_result":
+                    typeWriter(gameState._node01Result || '', textArea, 50, () => {
+                        setTimeout(() => { gameState.scene = 'node_0_2_intro'; renderScene(); }, 800);
+                    });
+                    break;
+                case "node_0_2_intro":
+                    gameState.week = 1; gameState.injectionThisWeek = 0; gameState.totalInjections = 0; gameState.woodStreak = 0;
+                    const intro02 = `<p>时间在这里是以注射的次数来计量的。金色的金属系试剂、翠绿的木系、淡蓝的水系、赤红的火系、黄褐的土系……</p><p class="system-text">[ 第1周 | 本周还需注射3次 | 木系累计：0 ]</p>`;
+                    typeWriter(intro02, textArea, 50, () => {
+                        choicesDiv.innerHTML = '<button onclick="startInjection()">接受注射</button>';
+                    });
+                    break;
+                case "node_0_2_injecting": performInjection(); break;
+                case "node_0_2_awakened":
+                    const awakenText = `<p class="awaken">连续三次木系——你的体内传来一声嗡鸣。</p><p class="awaken">那不是疼痛。那是<em>苏醒</em>。</p><p>一根翠绿的藤蔓从你的指尖钻出，穿过培养液，碰裂了玻璃壁。研究员猛地后退了一步——冷淡碎裂，取而代之的是敬畏。</p>`;
+                    typeWriter(awakenText, textArea, 45, () => {
+                        gameState.awakened = true; applyAwakenedUI();
+                        choicesDiv.innerHTML = '<button onclick="handleAwakenChoice(\'expose\')">坦然地展示你的力量</button><button onclick="handleAwakenChoice(\'hide\')">悄悄收回藤蔓</button>';
+                    });
+                    break;
+                case "node_0_2_awakened_result":
+                    typeWriter(gameState._awakenResult || '', textArea, 50, () => {
+                        setTimeout(() => { gameState.scene = 'node_0_3_intro'; renderScene(); }, 800);
+                    });
+                    break;
+                case "node_0_2_week_end":
+                    if (gameState.week < 3) {
+                        gameState.week++; gameState.injectionThisWeek = 0;
+                        typeWriter(`<p>研究员转身离开。你漂浮在培养液中，体内残余的药力缓缓平息。</p><p class="system-text">[ 第${gameState.week}周 | 木系累计：${gameState.woodStreak} ]</p>`, textArea, 50, () => { choicesDiv.innerHTML = '<button onclick="startInjection()">开始本周注射</button>'; });
+                    } else {
+                        if (gameState.totalInjections >= 6 && !gameState.awakened) addSuffix('Sisyphus');
+                        typeWriter('<p>九次注射结束。你没有觉醒。</p><p class="system-text">[ 植物系异能：未觉醒 ]</p>', textArea, 50, () => {
+                            modifyStat('corruption', 1);
+                            setTimeout(() => { gameState.scene = 'node_0_3_intro'; renderScene(); }, 800);
+                        });
+                    }
+                    break;
+                case "node_0_3_intro":
+                    typeWriter('<p>慌乱的脚步声，玻璃碎裂，低沉的嘶吼——那是丧尸。培养液因震动泛起涟漪。你命运的岔路口，在这一刻降临了。</p>', textArea, 45, () => {
+                        choicesDiv.innerHTML = '<button onclick="handleNode03(\'A\')">放声大哭</button><button onclick="handleNode03(\'B\')">面无表情地观察</button><button onclick="handleNode03(\'C\')">茫然安静地看着</button><button onclick="handleNode03(\'D\')">注意到丧尸头上的小花</button>';
+                    });
+                    break;
+                case "node_0_3_result":
+                    typeWriter(gameState._node03Result || '', textArea, 50, () => {
+                        applyRouteUI();
+                        if (gameState.location === 'human_base') { gameState.chapter = 1; gameState.scene = 'chapter1_human_intro'; }
+                        else { gameState.chapter = 1; gameState.scene = 'chapter1_abandoned_intro'; }
+                        saveGame(); renderScene();
+                    });
+                    break;
+                case "chapter1_human_intro":
+                    typeWriter('<p>林华抱着你穿过地下通道。基地大门打开，几十双眼睛转向你们。她挡在门口：<span class="golden">"她不一样。"</span></p><p class="system-text">[ 地点解锁：人类新基地 ]</p>', textArea, 50, () => { modifyStat('human', 2); gameState.linHuaFavor += 2; addSuffix('Noah'); choicesDiv.innerHTML = '<button onclick="startBaseDaily()">开启基地生活</button>'; });
+                    break;
+                    case "chapter1_base_rest":
+    // 基地休息时随机触发偶遇事件
+    const restEvents = [
+        '<p>你回到基地的温室，给之前种下的番茄浇了水。它们比你上次见到时又长高了一点。管温室的老人递给你一条毛巾。<span class="golden">"外面累了吧，擦擦汗。"</span></p>',
+        '<p>厨娘看到你回来了，从厨房里探出头来。<span class="golden">"今天食堂多做了点汤，给你留了一碗。"</span>汤是热的，你在废墟的冷风中吹了一整天的手，终于暖和了起来。</p>',
+        '<p>那个总是躲着你的男孩又来了。他递给你一颗新的弹壳——这次是铜的，擦得比上次那颗还亮。<span class="golden">"我听说你今天又出去了。"</span>他没有说别的，但你觉得他在关心你。</p>',
+        '<p>林华在医务室给你换了新的绷带。她的手很稳，和第一次从培养罐里把你捞出来时一模一样。<span class="golden">"你越来越像一个战士了。"</span>她没有笑，但你知道她在夸奖你。</p>',
+        '<p>你坐在基地的围墙上，看着夕阳从废墟的地平线上缓缓沉下去。今天的风不大，空气里有一点烧焦的味道——但头顶的星星已经开始亮起来了。明天还有丧尸要杀，但今夜，你是安全的。</p>'
+    ];
+    const restEvent = restEvents[Math.floor(Math.random() * restEvents.length)];
+    typeWriter(restEvent + '<p class="system-text">[ 累积击杀：' + gameState.baseKillCount + ' | 感染度：' + gameState.infection + ' ]</p>', textArea, 50, () => {
+        choicesDiv.innerHTML = '<button onclick="goMissionAgain()">再次外出</button><button onclick="goToFinalChoice()">推进主线</button>';
+        saveGame();
+    });
+    break;
+                case "chapter1_base_daily": startBaseDaily(); break;
+                case "chapter1_mission":
+                    typeWriter('<p>基地大门打开。林华站在你身后：<span class="golden">"小心。它们还在。"</span>你是基地里唯一的异能者，这是你的责任。</p>', textArea, 50, () => {
+                        choicesDiv.innerHTML = '<button onclick="handleMission(true)">击杀丧尸</button><button onclick="handleMission(false)">放走丧尸</button>';
+                    });
+                    break;
+                case "chapter1_abandoned_intro":
+                    typeWriter('<p>培养液已经冷透。丧尸远去，你独自存活。走廊广播沙沙作响：<span style="color:#778ca3;">"……Eden-8……确认存活……"</span>然后——一个温柔的声音响起：<span class="golden">"孩子。"</span></p>', textArea, 50, () => {
+                        choicesDiv.innerHTML = '<button onclick="handlePlanetCall(\'respond\')">回应这个声音</button><button onclick="handlePlanetCall(\'ignore\')">视而不见</button>';
+                    });
+                    break;
+                case "planet_daughter_daily":
+                    const remainingPets = [];
+                    if (!gameState.hasRabbit && !gameState.rejectedRabbit) remainingPets.push('rabbit');
+                    if (!gameState.hasMulberry && !gameState.rejectedMulberry) remainingPets.push('mulberry');
+                    if (!gameState.hasBird && !gameState.rejectedBird) remainingPets.push('bird');
+                    if (remainingPets.length === 0) {
+                        typeWriter('<p>废墟中的小生命们都有了归宿。星球意识轻轻叹了口气——是时候了。</p>', textArea, 50, () => {
+                            choicesDiv.innerHTML = '<button onclick="startPlanetDaily()">继续学习</button><button onclick="handlePlanetQuest()">响应星球的请求</button>';
+                        });
+                    } else {
+                        const pet = remainingPets[Math.floor(Math.random() * remainingPets.length)];
+                        const event = petRandomEvents[pet];
+                        typeWriter(event.text, textArea, 50, () => {
+                            choicesDiv.innerHTML = `<button onclick="adoptPet('${pet}')">${event.adoptBtn}</button><button onclick="rejectPet('${pet}')">${event.rejectBtn}</button>`;
+                        });
+                    }
+                    break;
+                case "survival_intro":
+                    typeWriter('<p>你没有回应那个声音。现在你只有自己。荒野在面前展开——焦黑的土地，倒塌的建筑，偶尔有丧尸经过。</p>', textArea, 50, () => {
+                        choicesDiv.innerHTML = '<button onclick="startSurvivalDaily()">探索荒野</button><button onclick="discoverBase()">向远处进发</button>';
+                    });
+                    break;
+                case "final_chapter_intro":
+                    typeWriter('<p>你站在废墟之上。远处丧尸嘶吼回荡，脚下大地裂开深深的纹路。你拥有改变这一切的力量。问题只有一个：<span class="golden">你愿意付出什么代价？</span></p>', textArea, 50, () => {
+                        choicesDiv.innerHTML = '<button onclick="makeFinalChoice(\'sacrifice\')">献祭自己</button><button onclick="makeFinalChoice(\'starward\')">远走星际</button><button onclick="makeFinalChoice(\'stay\')">什么都不做</button>';
+                    });
+                    break;
+                case "ending_watcher":
+                    typeWriter('<p>在时间的尽头……幸存者们在废墟上建起了新的村庄。村口有一棵大树，树冠如云。月圆之夜，树根之间隐约坐着一个不老的女性，目光温柔地注视着一切。</p><p class="awaken">—— 守望者 ——</p><p class="golden">她成神的时刻，不是击倒千万丧尸之时，而是在她选择了留下来。</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>'; });
+                    break;
+                case "ending_motherOfAll":
+                    typeWriter('<p>她将力量还给大地。藤蔓如绿色潮水覆盖每一寸焦土，真菌网络连接起所有存活的树，河流重归清澈，鸟群遮天蔽日地归来。她成了春天第一场雨，种子破土时的温度，星球新的呼吸。</p><p class="awaken">—— 万物之母 ——</p><p class="golden">她不再被看见，但她无处不在。</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>'; });
+                    break;
+                case "ending_explorer":
+                    typeWriter('<p>她转身，望向星空。她没有选择献祭——她相信人类的未来不应被绑在一颗垂死的星球上。她带着种子和书本飞向群星，在遥远的星系里播下了生命的痕迹。</p><p class="awaken">—— 星海孤舟 ——</p><p class="golden">她没有成神。她成为了比神更永恒的东西——一个传说。</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>'; });
+                    break;
+                case "ending_observer":
+                    typeWriter('<p>她只是看着。丧尸的嘶吼成了数据，眼泪成了概率，星球的哀鸣成了可解构的波形。她重建了实验室，只为理解一切。有人说她疯了，有人不再视她为人。但她不在乎。</p><p class="awaken">—— 无悲者 ——</p><p class="golden">她舍弃了情感换取了理解。代价是再也无法被任何人理解。</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>'; });
+                    break;
+                case "ending_corrupted_base":
+    typeWriter('<p>污染已经蔓延到了她的核心。</p><p>她不再记得林华的脸。不再记得那个给她糖果的女孩的名字。不再记得哨兵指给她看过的北斗七星。她走进尸群，它们没有攻击她。它们已经认不出她和它们的区别。她最后的意识，是基地食堂里厨娘从窗口探出头、往她餐盘里多加的那一勺菜——然后，连这个也消失了。</p><p class="awaken">—— 同化者 ——</p><p class="golden">她曾在人类的堡垒中找到过温暖。但最终，她连自己都失去了。</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>'; });
+    break;
+case "ending_corrupted_planet":
+    typeWriter('<p>污染已经蔓延到了她的核心。</p><p>她不再听见星球意识的声音。不再记得桑树种子被埋进瓷砖裂缝时的那声叹息。不再记得那只暗红羽毛的幼鸟在掌心里的颤抖。她走进尸群，它们没有攻击她——它们只是默默地接纳了这个曾经被称为“自然之子”的同类。她最后的意识，是“耳朵”第一次把下巴搁在她掌心里的温度。然后，连这个也消失了。</p><p class="awaken">—— 同化者 ——</p><p class="golden">她曾是被大地认下的孩子。但最终，她连星球的低语都听不见了。</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>'; });
+    break;
+case "ending_corrupted_survival":
+    typeWriter('<p>污染已经蔓延到了她的核心。</p><p>她不再记得荒野里那缕炊烟。不再记得收音机里那个女人唱的听不懂的歌。不再记得在河床上发现的人类脚印——那曾是她活下去的证据。她走进尸群，它们没有攻击她。她最后的意识，是那只流浪狗摇着尾巴走远了的背影——它曾是她唯一的同伴。然后，连这个也消失了。</p><p class="awaken">—— 同化者 ——</p><p class="golden">她曾在孤独中坚持了这么久。但最终，孤独反噬了一切。</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>'; });
+    break;
+                case "ending_infected":
+                    typeWriter('<p>她的手指开始腐烂——指甲脱落，皮肤变成灰绿色。但她还记得林华抱着她跑过走廊时的心跳，记得耳朵把下巴搁在她掌心的温度。她控制不住自己的身体了。她最后的画面，是自己的手撕碎了她亲手种下的那棵树。</p><p class="awaken">—— 同化者（肉体） ——</p><p class="golden">比死亡更残忍的是，你还保留着记忆，却失去了控制身体的权利。</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>'; });
+                    break;
+                    case "ending_infected_base":
+    typeWriter('<p>她的手指开始腐烂。指甲脱落，皮肤变成灰绿色。但她还记得林华抱着她跑过走廊时的心跳，记得那颗糖的甜味，记得厨娘递来的烤土豆的温度。她控制不住自己的身体了。她最后的画面，是自己的手——那双曾经翻过障碍物、种过番茄、接过弹壳礼物的手——正在撕碎基地温室里她亲手照料过的那棵苗。</p><p class="awaken">—— 同化者（肉体） ——</p><p class="golden">比死亡更残忍的是，你还记得如何温柔地触碰世界，却再也控制不住那双正在毁灭它的手。</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>'; });
+    break;
+case "ending_infected_planet":
+    typeWriter('<p>她的手指开始腐烂。但她还记得星球意识教她辨认第一颗种子时阳光的角度，记得那粒蒲公英飘到她手心里的重量，记得桑树破土时她屏住的呼吸。她控制不住自己的身体了。她最后的画面，是自己的手——那双曾经捧起受伤幼鸟、种下世界树种子、温柔抚摸过野兔耳朵的手——正在拔起她亲手种下的那棵桑树。</p><p class="awaken">—— 同化者（肉体） ——</p><p class="golden">她曾在废墟中创造生命。而现在，她正在亲手毁灭它们。</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>'; });
+    break;
+case "ending_infected_survival":
+    typeWriter('<p>她的手指开始腐烂。但她还记得那本烧掉一半的日记，记得收音机里那首听不懂的歌，记得那个在荒野尽头对她举了一下手的陌生人，记得北斗七星下那几个无眠的夜晚。她控制不住自己的身体了。她最后的画面，是自己的手——那双曾经捡起旧硬币、翻开残破书页、在地图上画下自己坐标的手——正在撕碎她在废墟中找到的唯一一张全家福。</p><p class="awaken">—— 同化者（肉体） ——</p><p class="golden">她曾在孤独中为自己建立了一个世界。而现在，她亲手拆毁了它。</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>'; });
+    break;
+                case "ending_fireOfCivilization":
+                    typeWriter('<p>她没有成为神，也没有变成怪物。她只是一个活下来的人。幸存者们聚集在她身边，不是因为崇拜，而是因为她让他们相信——人类还有明天。第一缕炊烟升起来了，然后是读书声，然后是一对新人在夕阳下交换弹壳做成的戒指。</p><p class="awaken">—— 文明火种 ——</p><p class="golden">她不伟大。她比伟大更难得——她是希望。</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>'; });
+                    break;
+                case "ending_bigDream":
+                    typeWriter('<p>她站在废墟之上，所有的结局都已看过。但这一次，她感觉到了什么——一切都太完整了，完整得像一个精心设计的实验。她睁开眼，看到虚空中的文字：【Simulation Complete】【Experiment Eden-8, Iteration Final】。</p><p class="awaken">—— 大梦谁先觉 ——</p><p class="golden">她从未存在过。但她的觉醒——是真实的。</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button>'; });
+                    break;
+                case "ending_sacrifice_devoted_base": renderSacrificeDevotedBase(); break;
+                case "ending_sacrifice_devoted_planet": renderSacrificeDevotedPlanet(); break;
+                case "ending_sacrifice_devoted_survival": renderSacrificeDevotedSurvival(); break;
+                case "ending_sacrifice_devoted":
+                    typeWriter('<p>你闭上眼睛，将力量倾泻而出。不是以神的名义——而是以人的方式。你记得那些温暖的面孔。你或许没有改变整个世界，但你改变了某一个人的世界。</p><p class="awaken">—— 虔诚之献 ——</p>', textArea, 45, () => { choicesDiv.innerHTML = '<button onclick="restartGame()">重新开始</button><button onclick="newGamePlus()">新周目</button>'; });
+                    break;
+                default:
+                    gameState.scene = 'node_0_1'; renderScene();
+            }
+        }
+
+        document.getElementById('text-area').addEventListener('click', () => { if (gameState.isTyping) skipTyping(); });
+
+        window.onload = function () {
+            if (!loadGame()) { updateFullCode(); updateStatDisplay(); }
+            renderScene();
+        };
+    </script>
+</body>
+</html>
